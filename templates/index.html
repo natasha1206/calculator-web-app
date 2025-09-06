@@ -1,0 +1,166 @@
+<!--
+Calculator Web App Frontend
+---------------------------
+This file defines the structure of the calculator (HTML),
+handles button clicks (JavaScript),
+and sends math expressions to the Flask backend.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Web App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="calculator">
+    <!-- Top Controls -->
+        <div class="top-controls">
+            <div class="left-controls">
+                <button class="toggle-mode" onclick="toggleMode()">🌙</button>
+            </div>
+            <div class="right-controls">
+                <button class="toggle-history" onclick="toggleHistory()">📜 History</button>
+            </div>
+        </div>
+
+    <!-- History Panel -->
+    <div id="history-panel" class="hidden">
+        <div class="history-header">
+            <span>Calculation History</span>
+            <button class="clear-history" onclick="clearHistory()">🧹 Clear</button>
+        </div>
+        <div id="history"></div>
+    </div>
+
+    <!-- Current expression -->
+    <input type="text" id="display" readonly>
+
+
+        <!-- Buttons -->
+        <div class="buttons">
+            <!-- Row 1: Scientific functions -->
+            <button onclick="append('sin(')">sin</button>
+            <button onclick="append('cos(')">cos</button>
+            <button onclick="append('tan(')">tan</button>
+            <button onclick="append('sqrt(')">√</button>
+
+            <!-- Row 2 -->
+            <button onclick="append('log(')">log</button>
+            <button onclick="append('ln(')">ln</button>
+            <button onclick="append('pi')">π</button>
+            <button onclick="append('e')">e</button>
+
+            <!-- Row 3 -->
+            <button onclick="append('**')">x^y</button>
+            <button onclick="append('**2')">x²</button>
+            <button onclick="append('factorial(')">n!</button>
+            <button onclick="clearDisplay()">C</button>
+
+            <!-- Row 4 -->
+            <button onclick="append('7')">7</button>
+            <button onclick="append('8')">8</button>
+            <button onclick="append('9')">9</button>
+            <button onclick="append('/')">÷</button>
+
+            <!-- Row 5 -->
+            <button onclick="append('4')">4</button>
+            <button onclick="append('5')">5</button>
+            <button onclick="append('6')">6</button>
+            <button onclick="append('*')">×</button>
+
+            <!-- Row 6 -->
+            <button onclick="append('1')">1</button>
+            <button onclick="append('2')">2</button>
+            <button onclick="append('3')">3</button>
+            <button onclick="append('-')">−</button>
+
+            <!-- Row 7 -->
+            <button onclick="append('0')">0</button>
+            <button onclick="append('.')">.</button>
+            <button onclick="backspace()">⌫</button>
+            <button onclick="append('+')">+</button>
+
+            <!-- Row 8 -->
+            <button class="equal" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function append(value) {
+            document.getElementById("display").value += value;
+        }
+
+        function clearDisplay() {
+            document.getElementById("display").value = "";
+        }
+
+        function backspace() {
+            let current = document.getElementById("display").value;
+            document.getElementById("display").value = current.slice(0, -1);
+        }
+
+        async function calculate() {
+            let expression = document.getElementById("display").value;
+
+            const response = await fetch("/calculate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ expression: expression })
+            });
+
+            const data = await response.json();
+
+            if (expression.trim() !== "") {
+                let historyDiv = document.getElementById("history");
+                let entry = document.createElement("div");
+                entry.className = "history-entry";
+                entry.textContent = expression + " = " + data.result;
+                historyDiv.appendChild(entry);
+                historyDiv.scrollTop = historyDiv.scrollHeight;
+            }
+
+            document.getElementById("display").value = data.result;
+        }
+
+        // Keyboard support
+        document.addEventListener("keydown", (event) => {
+            const display = document.getElementById("display");
+
+            if ((/[0-9+\-*/.%]/).test(event.key)) {
+                display.value += event.key;
+            } else if (event.key === "Enter") {
+                calculate();
+            } else if (event.key === "Backspace") {
+                backspace();
+            }
+        });
+
+        // 🌙 Dark/Light Mode Toggle
+        function toggleMode() {
+            document.body.classList.toggle("dark-mode");
+            const btn = document.querySelector(".toggle-mode");
+            btn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+        }
+
+        // 📜 Toggle History
+        function toggleHistory() {
+            let historyDiv = document.getElementById("history-panel");
+            historyDiv.classList.toggle("hidden");
+        }
+
+        // 🧹 Clear History
+        function clearHistory() {
+            document.getElementById("history").innerHTML = "";
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
